@@ -80,6 +80,7 @@ public class OSGIPluginRegistryExtensionTest {
   public void testInit() {
     PluginRegistry registry = mock( PluginRegistry.class );
     when( kettleClientEnvironmentInitialized.get() ).thenReturn( true );
+    when( tracker.registerPluginClass( any() ) ).thenReturn( true );
     OSGIPluginRegistryExtension.getInstance().init( registry );
     verify( karafBoot ).startup( null );
     verify( tracker ).registerPluginClass( PluginInterface.class );
@@ -89,6 +90,7 @@ public class OSGIPluginRegistryExtensionTest {
 
   @Test
   public void testSearchForType() {
+    when( tracker.registerPluginClass( any() ) ).thenReturn( true );
     OSGIPluginRegistryExtension.getInstance().searchForType( OSGIPluginType.getInstance() );
     verify( tracker ).registerPluginClass( OSGIPluginType.class );
   }

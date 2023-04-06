@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -29,6 +29,8 @@ import org.pentaho.di.osgi.service.tracker.BeanFactoryLookupServiceTracker;
 import org.pentaho.di.osgi.service.tracker.PdiPluginSupplementalClassMappingsTrackerForPluginRegistry;
 import org.pentaho.di.osgi.service.tracker.ProxyUnwrapperServiceTracker;
 import org.pentaho.osgi.api.BeanFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * User: nbaker Date: 11/2/10
@@ -40,6 +42,7 @@ public class OSGIActivator implements BundleActivator {
   private ProxyUnwrapperServiceTracker proxyUnwrapperServiceTracker;
   private PdiPluginSupplementalClassMappingsTrackerForPluginRegistry
     pdiPluginSupplementalClassMappingsTrackerForPluginRegistry;
+  private Logger logger = LoggerFactory.getLogger( OSGIActivator.class );
 
   public OSGIActivator() {
     osgiPluginTracker = OSGIPluginTracker.getInstance();
@@ -55,6 +58,7 @@ public class OSGIActivator implements BundleActivator {
   }
 
   @Override public void start( BundleContext bundleContext ) throws Exception {
+    logger.info( "OSGIActivator started" );
     this.bundleContext = bundleContext;
     proxyUnwrapperServiceTracker = new ProxyUnwrapperServiceTracker( bundleContext, osgiPluginTracker );
     proxyUnwrapperServiceTracker.open();
@@ -72,6 +76,7 @@ public class OSGIActivator implements BundleActivator {
   }
 
   public void stop( BundleContext bundleContext ) throws Exception {
+    logger.info( "OSGIActivator stopped" );
     KarafLifecycleListener.getInstance().setBundleContext( null );
     osgiPluginTracker.shutdown();
     beanFactoryLookupServiceTracker.close();
