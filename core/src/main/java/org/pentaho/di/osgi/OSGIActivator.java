@@ -32,6 +32,8 @@ import org.pentaho.osgi.api.BeanFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * User: nbaker Date: 11/2/10
  */
@@ -42,6 +44,8 @@ public class OSGIActivator implements BundleActivator {
   private ProxyUnwrapperServiceTracker proxyUnwrapperServiceTracker;
   private PdiPluginSupplementalClassMappingsTrackerForPluginRegistry
     pdiPluginSupplementalClassMappingsTrackerForPluginRegistry;
+  private static AtomicInteger numStarts = new AtomicInteger( 0 );
+  private static Object monitor = new Object();
   private Logger logger = LoggerFactory.getLogger( OSGIActivator.class );
 
   public OSGIActivator() {
@@ -73,6 +77,12 @@ public class OSGIActivator implements BundleActivator {
 
     // Make sure all activation is done BEFORE this call. It will block until all bundles are registered
     KarafLifecycleListener.getInstance().setBundleContext( bundleContext );
+    numStarts.getAndIncrement();
+    if ( numStarts.get() >= 2 ) {
+      synchronized ( monitor ) {
+        monitor.notifyAll();
+      }
+    }
   }
 
   public void stop( BundleContext bundleContext ) throws Exception {
@@ -82,5 +92,13 @@ public class OSGIActivator implements BundleActivator {
     beanFactoryLookupServiceTracker.close();
     proxyUnwrapperServiceTracker.close();
     pdiPluginSupplementalClassMappingsTrackerForPluginRegistry.close();
+  }
+
+  public static synchronized Object getMonitor() {
+    return monitor;
+  }
+
+  public static synchronized boolean shouldWait() {
+    return numStarts.get() < 2;
   }
 }

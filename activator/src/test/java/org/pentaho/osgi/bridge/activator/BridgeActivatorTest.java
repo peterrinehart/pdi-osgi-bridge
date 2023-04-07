@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -34,8 +34,14 @@ import org.pentaho.di.core.util.ExecutorUtil;
 import java.util.Hashtable;
 import java.util.concurrent.ExecutorService;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class BridgeActivatorTest {
 
@@ -54,7 +60,7 @@ public class BridgeActivatorTest {
   public void testStart() throws Exception {
     bridgeActivator.start( bundleContext );
     verify( bundleContext, atLeastOnce() ).createFilter( anyString() );
-    verify( bundleContext, times( 8 ) ).addServiceListener( (ServiceListener) anyObject(), anyString() );
+    verify( bundleContext, times( 8 ) ).addServiceListener( (ServiceListener) any(), anyString() );
     verify( bundleContext, atLeastOnce() ).registerService( ExecutorService.class,
         ExecutorUtil.getExecutor(), new Hashtable<String, Object>() );
   }

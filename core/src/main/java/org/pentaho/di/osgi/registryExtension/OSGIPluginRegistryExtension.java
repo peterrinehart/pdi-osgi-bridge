@@ -29,6 +29,7 @@ import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.di.core.plugins.PluginRegistryExtension;
 import org.pentaho.di.core.plugins.PluginTypeInterface;
 import org.pentaho.di.core.plugins.RegistryPlugin;
+import org.pentaho.di.osgi.OSGIActivator;
 import org.pentaho.di.osgi.OSGIPluginTracker;
 import org.pentaho.di.osgi.OSGIPluginType;
 import org.pentaho.di.osgi.StatusGetter;
@@ -99,7 +100,6 @@ public class OSGIPluginRegistryExtension implements PluginRegistryExtension {
     return boot;
   }
 
-  @SuppressWarnings( "squid:S2276" ) // can't use a monitor here, but blocking in here is appropriate
   public synchronized void init( final PluginRegistry registry ) {
     if ( PentahoSystem.getInitializedStatus() != PentahoSystem.SYSTEM_INITIALIZED_OK && !initializedKaraf.getAndSet(
       true ) ) {
@@ -109,35 +109,32 @@ public class OSGIPluginRegistryExtension implements PluginRegistryExtension {
       boot.startup( null );
     }
     PluginRegistry.addPluginType( OSGIPluginType.getInstance() );
-    boolean success = false;
-    while ( !success ) {
-      success = tracker.registerPluginClass( PluginInterface.class );
-
-      if ( success ) {
-        tracker.addPluginLifecycleListener( PluginInterface.class,
-          new PluginRegistryOSGIServiceLifecycleListener( registry ) );
-      } else {
-        logger.info( "Unable to register PluginInterface with OSGIPluginTracker; waiting and retrying" );
-        try {
-          Thread.sleep( 1000 );
-        } catch ( InterruptedException e ) {
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
+    logger.info( "Waiting for OSGIActivator" );
+    waitForMonitor();
+    tracker.registerPluginClass( PluginInterface.class );
+    tracker.addPluginLifecycleListener( PluginInterface.class,
+      new PluginRegistryOSGIServiceLifecycleListener( registry ) );
   }
 
   @Override
   public void searchForType( PluginTypeInterface pluginType ) {
-    boolean success = false;
-    while ( !success ) {
-      success = tracker.registerPluginClass( pluginType.getClass() );
-      if ( !success ) {
-        logger.info( String.format( "Unable to register %s with OSGIPluginTracker; waiting and retrying", pluginType.getClass() ) );
+    logger.info( "Waiting for OSGIActivator" );
+    waitForMonitor();
+    tracker.registerPluginClass( pluginType.getClass() );
+  }
+
+  private void waitForMonitor() {
+    // This is a big assumption.  Behavior of our current karaf implementation appears to be that the OSGIActivator
+    // will be started, stopped, and started again.  We want to wait for that to be complete before we try using it.
+    while ( OSGIActivator.shouldWait() ) {
+      Object monitor = OSGIActivator.getMonitor();
+      synchronized ( monitor ) {
         try {
-          Thread.sleep( 1000 );
+          monitor.wait( 120000 );
         } catch ( InterruptedException e ) {
           Thread.currentThread().interrupt();
+          logger.info( "OSGIPluginRegistryExtension interrupted waiting for OSGIActivator" );
+          break;
         }
       }
     }

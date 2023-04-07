@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -41,7 +41,8 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -206,20 +207,21 @@ public class KarafLifecycleListenerTest {
     karafLifecycleListener = new KarafLifecycleListener( 500 );
     KarafLifecycleListener.setLogger( mockLogger );
     karafLifecycleListener.setBundleContext( bundleContext );
-    verify( mockLogger).debug( "Bundle context set in KarafLifecycleListener" );
 
     Thread t = new Thread( () -> {
+        // this might catch the log when it gets set during setup() too
+        verify( mockLogger, atLeast( 1 ) ).debug( eq("Bundle context set in KarafLifecycleListener" ) );
         karafLifecycleListener.waitForFeatures();
         verify( mockLogger ).debug(
-          "Watcher thread interrupted waiting for service org.pentaho.osgi.api.IKarafFeatureWatcher" );
+          eq("Watcher thread interrupted waiting for service org.pentaho.osgi.api.IKarafFeatureWatcher" ) );
         verify( mockLogger ).debug(
-          "Thread interrupted itself because bundle context was invalid; bundle likely restarting" );
+          eq( "Thread interrupted itself because bundle context was invalid; bundle likely restarting" ) );
 
         karafLifecycleListener.waitForFrameworkStarted();
         karafLifecycleListener.waitForBlueprints();
-        verify( mockLogger ).debug( "Watcher thread interrupted during waitForBlueprints" );
+        verify( mockLogger ).debug( eq( "Watcher thread interrupted during waitForBlueprints" ) );
         karafLifecycleListener.acceptEventOnDelayedServiceNotifiersDone();
-        verify( mockLogger ).debug( "Watcher thread interrupted during acceptEventOnDelayedServiceNotifiersDone" );
+        verify( mockLogger ).debug( eq( "Watcher thread interrupted during acceptEventOnDelayedServiceNotifiersDone" ) );
     } );
     t.start();
   }

@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -29,15 +29,18 @@ import org.apache.karaf.features.FeaturesService;
 import org.apache.karaf.features.RepositoryEvent;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.pentaho.capabilities.api.ICapability;
 
 import java.util.Set;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,8 +62,8 @@ public class KarafCapabilityProviderTest {
     bundleContext = mock( BundleContext.class );
     featuresService = mock( FeaturesService.class );
     when( featuresService.listFeatures() ).thenReturn( featureList );
-    when( featuresService.getFeature( anyString() ) ).thenReturn( feature );
-    when( bundleContext.getService( (ServiceReference) anyObject() ) ).thenReturn( featuresService );
+    when( featuresService.getFeature( ArgumentMatchers.anyString() ) ).thenReturn( feature );
+    when( bundleContext.getService( (ServiceReference) any() ) ).thenReturn( featuresService );
   }
 
   @Test
@@ -92,7 +95,7 @@ public class KarafCapabilityProviderTest {
   public void testGetCapabilityById() throws Exception {
     Feature feature = mock( Feature.class );
     Feature[] featureList = {feature};
-    when( featuresService.getFeature( anyString() )).thenReturn( feature );
+    when( featuresService.getFeature( ArgumentMatchers.anyString() )).thenReturn( feature );
     karafCapabilityProvider = new KarafCapabilityProvider( bundleContext );
     ServiceReference serviceReference = mock( ServiceReference.class );
     karafCapabilityProvider.addingService( serviceReference );
@@ -104,7 +107,7 @@ public class KarafCapabilityProviderTest {
   @Test
   public void testCapabilityExist() throws Exception {
     Feature feature = mock( Feature.class );
-    when( featuresService.getFeature( anyString() )).thenReturn( feature );
+    when( featuresService.getFeature( ArgumentMatchers.anyString() )).thenReturn( feature );
     karafCapabilityProvider = new KarafCapabilityProvider( bundleContext );
     ServiceReference serviceReference = mock( ServiceReference.class );
     karafCapabilityProvider.addingService( serviceReference );
@@ -112,7 +115,7 @@ public class KarafCapabilityProviderTest {
     boolean exists = karafCapabilityProvider.capabilityExist( TEST_CAPABILITY_ID );
     assertTrue( exists );
 
-    when( featuresService.getFeature( anyString() )).thenReturn( null );
+    when( featuresService.getFeature( ArgumentMatchers.anyString() )).thenReturn( null );
     boolean doesNotExist = karafCapabilityProvider.capabilityExist( "bad" );
     assertFalse( doesNotExist );
   }
@@ -151,7 +154,7 @@ public class KarafCapabilityProviderTest {
   @Test
   public void testFeatureEvent() throws Exception {
     FeaturesService featuresService = mock( FeaturesService.class );
-    when( bundleContext.getService( (ServiceReference) anyObject() ) ).thenReturn( featuresService );
+    when( bundleContext.getService( (ServiceReference) any() ) ).thenReturn( featuresService );
     karafCapabilityProvider = new KarafCapabilityProvider( bundleContext );
     ServiceReference serviceReference = mock( ServiceReference.class );
     karafCapabilityProvider.addingService( serviceReference );
@@ -173,7 +176,7 @@ public class KarafCapabilityProviderTest {
   @Test
   public void testFeatureEventUninstalled() throws Exception {
     FeaturesService featuresService = mock( FeaturesService.class );
-    when( bundleContext.getService( (ServiceReference) anyObject() ) ).thenReturn( featuresService );
+    when( bundleContext.getService( (ServiceReference) any() ) ).thenReturn( featuresService );
     karafCapabilityProvider = new KarafCapabilityProvider( bundleContext );
     ServiceReference serviceReference = mock( ServiceReference.class );
     karafCapabilityProvider.addingService( serviceReference );

@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -22,6 +22,10 @@
 
 package org.pentaho.di.osgi.registryExtension;
 
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.osgi.framework.BundleContext;
+import org.pentaho.di.osgi.OSGIActivator;
 import org.slf4j.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -77,11 +81,14 @@ public class OSGIPluginRegistryExtensionTest {
   }
 
   @Test
-  public void testInit() {
+  public void testInit() throws Exception {
     PluginRegistry registry = mock( PluginRegistry.class );
     when( kettleClientEnvironmentInitialized.get() ).thenReturn( true );
     when( tracker.registerPluginClass( any() ) ).thenReturn( true );
-    OSGIPluginRegistryExtension.getInstance().init( registry );
+    try ( MockedStatic<OSGIActivator> osgiActivatorMockedStatic = Mockito.mockStatic( OSGIActivator.class ) ) {
+      osgiActivatorMockedStatic.when( () -> OSGIActivator.shouldWait() ).thenReturn( false );
+      OSGIPluginRegistryExtension.getInstance().init( registry );
+    }
     verify( karafBoot ).startup( null );
     verify( tracker ).registerPluginClass( PluginInterface.class );
     verify( tracker ).addPluginLifecycleListener( any( Class.class ),
@@ -89,9 +96,12 @@ public class OSGIPluginRegistryExtensionTest {
   }
 
   @Test
-  public void testSearchForType() {
+  public void testSearchForType() throws Exception {
     when( tracker.registerPluginClass( any() ) ).thenReturn( true );
-    OSGIPluginRegistryExtension.getInstance().searchForType( OSGIPluginType.getInstance() );
+    try ( MockedStatic<OSGIActivator> osgiActivatorMockedStatic = Mockito.mockStatic( OSGIActivator.class ) ) {
+      osgiActivatorMockedStatic.when( () -> OSGIActivator.shouldWait() ).thenReturn( false );
+      OSGIPluginRegistryExtension.getInstance().searchForType( OSGIPluginType.getInstance() );
+    }
     verify( tracker ).registerPluginClass( OSGIPluginType.class );
   }
 
