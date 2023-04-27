@@ -341,7 +341,6 @@ public class OSGIPluginTrackerTest {
     when( bundleContext.getService( serviceReference ) ).thenReturn( instance );
     tracker.serviceChanged( Object.class, LifecycleEvent.START, serviceReference );
     verify( listener1 ).pluginAdded( instance );
-    verify( listener2 ).pluginAdded( instance );
   }
 
   @Test

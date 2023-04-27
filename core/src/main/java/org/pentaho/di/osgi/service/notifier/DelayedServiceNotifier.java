@@ -22,6 +22,7 @@
 
 package org.pentaho.di.osgi.service.notifier;
 
+import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.osgi.OSGIPluginTracker;
 import org.pentaho.di.osgi.OSGIPluginTrackerException;
 import org.pentaho.di.osgi.service.lifecycle.LifecycleEvent;
@@ -85,7 +86,7 @@ public class DelayedServiceNotifier implements Runnable {
     } else {
       try {
         List<OSGIServiceLifecycleListener> listenerList = listeners.get( classToTrack );
-        if ( listenerList != null ) {
+        if ( listenerList != null  && listenerList.size() > 0 ) {
           for ( OSGIServiceLifecycleListener listener : listenerList ) {
             switch ( eventType ) {
               case START:
@@ -101,6 +102,9 @@ public class DelayedServiceNotifier implements Runnable {
                 throw new IllegalStateException( "Unhandled enum value: " + eventType );
             }
           }
+        } else if ( classToTrack.isAssignableFrom( PluginInterface.class ) ) {
+          // if there was no listener, retry later
+          ScheduledFuture<?> timeHandle = scheduler.schedule( this, 100, TimeUnit.MILLISECONDS );
         }
       } catch ( IllegalStateException e ) {
         if ( e.getMessage().startsWith( "Invalid BundleContext" ) ) {
