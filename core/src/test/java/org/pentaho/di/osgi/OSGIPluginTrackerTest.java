@@ -340,7 +340,7 @@ public class OSGIPluginTrackerTest {
     when( lookup.getBeanFactory( bundle ) ).thenReturn( beanFactory );
     when( bundleContext.getService( serviceReference ) ).thenReturn( instance );
     tracker.serviceChanged( Object.class, LifecycleEvent.START, serviceReference );
-    verify( listener1 ).pluginAdded( instance );
+    verify( listener2 ).pluginAdded( instance );
   }
 
   @Test

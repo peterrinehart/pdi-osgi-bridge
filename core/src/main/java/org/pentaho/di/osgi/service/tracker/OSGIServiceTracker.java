@@ -88,19 +88,18 @@ public class OSGIServiceTracker extends ServiceTracker {
   @Override
   public Object addingService( ServiceReference
                                  reference ) {
-    logger.info( "Called addingService on tracker " + clazzToTrack.getName() );
+    logger.debug( "Called addingService on tracker " + clazzToTrack.getName() );
+    logger.debug( "total services tracked " + references.size() );
     references.add( reference );
     tracker.serviceChanged( clazzToTrack, LifecycleEvent.START, reference );
     Object retVal = super.addingService( reference );
-    logger.info( "total services tracked " + references.size() );
-    logger.info( "total services tracked by super " + ( this.getServices() != null ? this.getServices().length : "null" ) );
     return retVal;
   }
 
   @Override
   public void removedService( ServiceReference
                                 reference, Object service ) {
-    logger.info( "Called removedService on tracker " + clazzToTrack.getName() );
+    logger.debug( "Called removedService on tracker " + clazzToTrack.getName() );
     references.remove( reference );
     // wrapping super call in a method to allow Mockito overriding
     try {
@@ -118,7 +117,7 @@ public class OSGIServiceTracker extends ServiceTracker {
   @Override
   public void modifiedService( ServiceReference
                                  reference, Object service ) {
-    logger.info( "Called modifiedService on tracker " + clazzToTrack.getName() );
+    logger.debug( "Called modifiedService on tracker " + clazzToTrack.getName() );
     tracker.serviceChanged( clazzToTrack, LifecycleEvent.MODIFY, reference );
     super.modifiedService( reference, service );
   }
