@@ -18,6 +18,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.startlevel.FrameworkStartLevel;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.pentaho.di.core.util.ExecutorUtil;
 import org.pentaho.di.osgi.service.lifecycle.LifecycleEvent;
 import org.pentaho.di.osgi.service.notifier.DelayedServiceNotifierListener;
@@ -33,7 +35,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,6 +58,8 @@ public class KarafLifecycleListener implements IPhasedLifecycleListener<KettleLi
   private BundleContext bundleContext;
   private IPhasedLifecycleEvent<KettleLifecycleEvent> event;
   private Thread watcherThread;
+  private static final Set<String> expectedPluginIds = new HashSet();
+  private static final Set<String> seenPluginIds = new HashSet<>();
 
   private final Integer frameworkBeginningStartLevel;
   private FrameworkStartLevel frameworkStartLevel;
@@ -155,6 +163,7 @@ public class KarafLifecycleListener implements IPhasedLifecycleListener<KettleLi
         logger.debug( "Watcher thread started" );
         waitForBundlesStarted();
         waitForBlueprints();
+        waitForKettlePluginsRegistered();
         acceptEventOnDelayedServiceNotifiersDone();
       } );
       watcherThread.setDaemon( true );
@@ -266,6 +275,49 @@ public class KarafLifecycleListener implements IPhasedLifecycleListener<KettleLi
       Thread.currentThread().interrupt();
     }
   }
+
+  void waitForKettlePluginsRegistered() {
+    try {
+      Thread.sleep( 100 );
+      if ( expectedPluginIds.isEmpty() ) {
+        ConfigurationAdmin configurationAdmin = getOsgiService( ConfigurationAdmin.class );
+        if ( null != configurationAdmin ) {
+          Configuration config = configurationAdmin.getConfiguration( "org.pentaho.features" );
+          Dictionary<String, Object> dictionary = config.getProperties();
+          String waitForPlugins = ( String ) dictionary.get( "waitForPlugins" );
+          String[] pluginsArray = waitForPlugins.split( "," );
+          expectedPluginIds.addAll( Arrays.asList( pluginsArray ) );
+        }
+      }
+
+      while( !seenAllPlugins() ) {
+        if ( logger.isDebugEnabled() ) {
+          Set<String> missingPlugins = new HashSet<>();
+          missingPlugins.addAll( expectedPluginIds );
+          missingPlugins.removeAll( seenPluginIds );
+          String remainingPluginList = missingPlugins.stream().reduce( "", ( a, b ) -> a + "," + b );
+          logger.debug( "Waiting for the following plugins: {s}", remainingPluginList  );
+        }
+
+        Thread.sleep( 1000 );
+      }
+
+    } catch ( InterruptedException e ) {
+      logger.debug( "Watcher thread interrupted during waitForPlugins" );
+      Thread.currentThread().interrupt();
+    } catch ( IOException e ) {
+      logger.warn( "IOException reading plugins list: ", e );
+    }
+  }
+
+  public static synchronized void pluginIdRegistered( String id ) {
+    seenPluginIds.add( id );
+  }
+
+  private static synchronized boolean seenAllPlugins()  {
+    return seenPluginIds.containsAll( expectedPluginIds );
+  }
+
 
   @VisibleForTesting
   void acceptEventOnDelayedServiceNotifiersDone() {
