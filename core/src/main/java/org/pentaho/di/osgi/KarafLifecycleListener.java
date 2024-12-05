@@ -266,6 +266,7 @@ public class KarafLifecycleListener implements IPhasedLifecycleListener<KettleLi
     try {
       Thread.sleep( 100 );
       IKarafFeatureWatcher karafFeatureWatcher = getKarafFeatureWatcher();
+      logger.debug( "Start waiting for features" );
       karafFeatureWatcher.waitForFeatures();
     } catch ( IKarafFeatureWatcher.FeatureWatcherException e ) {
       if ( null != bundleContext && !( e.getCause() instanceof InterruptedException ) ) {
@@ -292,6 +293,7 @@ public class KarafLifecycleListener implements IPhasedLifecycleListener<KettleLi
           logger.debug( "Thread interrupted itself because bundle context was invalid; bundle likely restarting" );
         }
       } else {
+        logger.debug( "Start waiting for blueprints" );
         karafBlueprintWatcher.waitForBlueprint();
       }
     } catch ( IKarafBlueprintWatcher.BlueprintWatcherException e ) {
@@ -312,8 +314,10 @@ public class KarafLifecycleListener implements IPhasedLifecycleListener<KettleLi
       Thread.sleep( 100 );
       if ( expectedPluginIds.isEmpty() ) {
         IKarafFeatureWatcher karafFeatureWatcher = getKarafFeatureWatcher();
+        // this is safe because if the karafFeatureWatcher returned would be null, the previous method would throw an exception
         expectedPluginIds.addAll( karafFeatureWatcher.getFeatures( "org.pentaho.features",  "waitForPlugins" ) );
       }
+      logger.debug( "Start waiting for {} kettle plugins", expectedPluginIds.size() );
 
       while( !seenAllPlugins() ) {
         Set<String> missingPlugins = new HashSet<>();
