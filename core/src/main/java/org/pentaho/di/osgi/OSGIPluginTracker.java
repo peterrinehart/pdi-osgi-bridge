@@ -15,7 +15,6 @@ package org.pentaho.di.osgi;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.beanutils.BeanUtils;
-import org.eclipse.swt.internal.gtk.OS;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
